@@ -4,11 +4,17 @@ const cors = require("cors")
 const jwt = require("jsonwebtoken")
 
 const privateKey = "secret"
+const refreshKey = "refresh"
 
 app.use(express.json())
 app.use(cors())
 
-const userInfo = []
+const userInfo = [
+  {
+    id: "1234",
+    password: "1234",
+  },
+]
 
 // 로그인
 app.post("/login", (req, res) => {
@@ -21,7 +27,8 @@ app.post("/login", (req, res) => {
       // password 맞음
       res.status(200).json({
         msg: "로그인 성공",
-        accessToken: jwt.sign({ userId: id }, privateKey),
+        accessToken: jwt.sign({ userId: id }, privateKey, { expiresIn: "10s" }),
+        refreshToken: jwt.sign({ userId: id }, refreshKey, { expiresIn: "10h" }),
       })
       return
     }
@@ -48,6 +55,40 @@ app.post("/signIn", (req, res) => {
   console.log("userInfo", userInfo)
 
   res.send("회원가입 성공")
+})
+
+// 토큰 검증
+app.get("/userInfo", (req, res) => {
+  const accessToken = req.header("access-token")
+
+  jwt.verify(accessToken, privateKey, (err, decoded) => {
+    if (err) {
+      if (err.name === "TokenExpiredError") return res.status(401).send("토큰 유효기간 만료")
+      res.status(500).send("에러")
+      return
+    }
+    res.status(200).json({
+      userInfo,
+    })
+  })
+})
+
+// 리프레시 토큰
+app.get("/refreshToken", (req, res) => {
+  const refreshToken = req.header("refresh-token")
+
+  jwt.verify(refreshToken, refreshKey, (err, decoded) => {
+    if (err) {
+      if (err.name === "TokenExpiredError") return res.status(401).send("토큰 유효기간 만료")
+      res.status(500).send("에러")
+      return
+    }
+    console.log("decode: ", decoded)
+
+    res.status(200).json({
+      accessToken: jwt.sign({ userId: decoded.id }, privateKey, { expiresIn: "10s" }),
+    })
+  })
 })
 
 const port = 3000
