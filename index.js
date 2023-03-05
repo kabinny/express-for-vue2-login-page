@@ -14,6 +14,10 @@ const userInfo = [
     id: "1234",
     password: "1234",
   },
+  {
+    id: "qwer",
+    password: "1234",
+  },
 ]
 
 // 로그인
@@ -27,8 +31,8 @@ app.post("/login", (req, res) => {
       // password 맞음
       res.status(200).json({
         msg: "로그인 성공",
-        accessToken: jwt.sign({ userId: id }, privateKey, { expiresIn: "10s" }),
-        refreshToken: jwt.sign({ userId: id }, refreshKey, { expiresIn: "10h" }),
+        accessToken: jwt.sign({ userId: id }, privateKey, { expiresIn: "10m" }),
+        refreshToken: jwt.sign({ userId: id }, refreshKey, { expiresIn: "20m" }),
       })
       return
     }
@@ -57,7 +61,7 @@ app.post("/signIn", (req, res) => {
   res.send("회원가입 성공")
 })
 
-// 토큰 검증
+// 유저 리스트
 app.get("/userInfo", (req, res) => {
   const accessToken = req.header("access-token")
 
@@ -75,6 +79,21 @@ app.get("/userInfo", (req, res) => {
   })
 })
 
+// 특정 유저 정보
+app.get("/userInfo/:id", (req, res) => {
+  const accessToken = req.header("access-token")
+  const { id } = req.params
+
+  jwt.verify(accessToken, privateKey, (err, decoded) => {
+    if (err) {
+      return res.status(401).send("토큰 오류")
+    }
+    res.status(200).json({
+      user: userInfo.find((item) => item.id === id),
+    })
+  })
+})
+
 // 리프레시 토큰
 app.get("/refreshToken", (req, res) => {
   const refreshToken = req.header("refresh-token")
@@ -88,7 +107,7 @@ app.get("/refreshToken", (req, res) => {
     console.log("decode: ", decoded)
 
     res.status(200).json({
-      accessToken: jwt.sign({ userId: decoded.id }, privateKey, { expiresIn: "10s" }),
+      accessToken: jwt.sign({ userId: decoded.id }, privateKey, { expiresIn: "10m" }),
     })
   })
 })
