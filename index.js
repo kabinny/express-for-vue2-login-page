@@ -9,19 +9,10 @@ const refreshKey = "refresh"
 app.use(express.json())
 app.use(cors())
 
-const userInfo = [
-  {
-    id: "1234",
-    password: "1234",
-  },
-  {
-    id: "qwer",
-    password: "1234",
-  },
-]
+const userInfo = []
 
 // 로그인
-app.post("/login", (req, res) => {
+app.post('/login', (req, res) => {
   // body id, password
   const { id, password } = req.body
   const userIndex = userInfo.findIndex((item) => item.id === id)
@@ -30,25 +21,39 @@ app.post("/login", (req, res) => {
     if (userInfo[userIndex].password === password) {
       // password 맞음
       res.status(200).json({
-        msg: "로그인 성공",
-        accessToken: jwt.sign({ userId: id }, privateKey, { expiresIn: "10m" }),
-        refreshToken: jwt.sign({ userId: id }, refreshKey, { expiresIn: "20m" }),
+        msg: '로그인 성공',
+        accessToken: jwt.sign({ userId: id }, privateKey, { expiresIn: '10m' }),
+        refreshToken: jwt.sign({ userId: id }, refreshKey, {
+          expiresIn: '20m',
+        }),
       })
       return
     }
   }
 
-  res.status(500).send("로그인 실패")
+  res.status(500).send('로그인 실패')
 })
 
 // 회원가입
-app.post("/signIn", (req, res) => {
+app.post('/signIn', (req, res) => {
   console.log(req.body)
   // body id, password
-  const { id, password } = req.body
+  const { id, password, isSocial, name, email } = req.body
+  console.log(id, password, isSocial, name, email)
+
+  if (isSocial) {
+    userInfo.push({
+      id,
+      name,
+      email,
+      isSocial,
+    })
+    res.send('회원가입 성공')
+    return
+  }
 
   if (userInfo.findIndex((item) => item.id === id) > -1) {
-    res.status(500).send("회원가입 실패")
+    res.status(500).send('회원가입 실패')
     return
   }
 
@@ -56,9 +61,9 @@ app.post("/signIn", (req, res) => {
     id,
     password,
   })
-  console.log("userInfo", userInfo)
+  console.log('userInfo', userInfo)
 
-  res.send("회원가입 성공")
+  res.send('회원가입 성공')
 })
 
 // 유저 리스트
