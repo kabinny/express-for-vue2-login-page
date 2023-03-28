@@ -14,9 +14,20 @@ const userInfo = []
 // 로그인
 app.post('/login', (req, res) => {
   // body id, password
-  const { id, password } = req.body
+  const { id, password, isSocial } = req.body
   const userIndex = userInfo.findIndex((item) => item.id === id)
   if (userIndex > -1) {
+    if (isSocial) {
+      res.status(200).json({
+        msg: '로그인 성공',
+        accessToken: jwt.sign({ userId: id }, privateKey, { expiresIn: '10m' }),
+        refreshToken: jwt.sign({ userId: id }, refreshKey, {
+          expiresIn: '20m',
+        }),
+      })
+      return
+    }
+
     // ID는 있음
     if (userInfo[userIndex].password === password) {
       // password 맞음
